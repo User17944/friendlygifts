@@ -1,3 +1,5 @@
+from aiohttp import web
+import os
 import asyncio, json
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
@@ -45,5 +47,21 @@ async def main():
     print("Бот запущен...")
     await dp.start_polling(bot)
 
+async def web_server():
+    app = web.Application()
+    app.router.add_get('/', lambda r: web.Response(text="Bot is running!"))
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', int(os.getenv("PORT", 8080)))
+    await site.start()
+    print("Веб-сервер запущен для Render!")
+
+async def main_wrapper():
+    # Запускаем и веб-сервер для портов, и самого бота
+    await asyncio.gather(
+        web_server(),
+        main()
+    )
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main_wrapper())
